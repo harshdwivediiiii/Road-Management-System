@@ -6,3 +6,5 @@ aiortc
 Flask
 pymongo
 requests
+python-dotenv
+pydantic
