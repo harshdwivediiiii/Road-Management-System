@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections import Counter
 from datetime import datetime
 
 from flask import Response
@@ -13,6 +14,53 @@ from storage import (
     get_zone_counts,
 )
 
+
+# ── Data helpers — mirror the API logic but call storage directly ────
+# Flask dev-server is single-threaded so HTTP self-calls deadlock.
+# These functions replicate what /api/potholes, /api/stats and
+# /api/hotspots return, but without going through the network.
+
+
+def _data_potholes(limit: int = 100) -> list:
+    """Same result as GET /api/potholes → potholes list."""
+    try:
+        return get_all_potholes(limit=limit)
+    except Exception as exc:
+        print(f"[DASHBOARD][ERROR] potholes query failed: {exc}")
+        return []
+
+
+def _data_stats() -> dict:
+    """Same result as GET /api/stats."""
+    try:
+        counts = get_counts()
+        total = counts.get("total", 0)
+        fixed = counts.get("fixed", 0)
+        fix_rate = round((fixed / total) * 100, 2) if total else 0.0
+        return {
+            **counts,
+            "fix_rate": fix_rate,
+            "hourly": get_hourly_counts(hours=8),
+            "zones": get_zone_counts(),
+            "status_counts": get_status_counts(),
+            "severity_counts": get_severity_counts(),
+        }
+    except Exception as exc:
+        print(f"[DASHBOARD][ERROR] stats query failed: {exc}")
+        return {}
+
+
+def _data_hotspots() -> list:
+    """Same result as GET /api/hotspots."""
+    try:
+        zones = get_zone_counts()
+        return [z for z in zones if z.get("count", 0) > 1]
+    except Exception as exc:
+        print(f"[DASHBOARD][ERROR] hotspots query failed: {exc}")
+        return []
+
+
+# ── Dash imports (graceful fallback) ─────────────────────────────────
 try:
     import dash
     import plotly.graph_objects as go
@@ -31,10 +79,13 @@ COLORS = {
     "red": "#ef4444",
     "yellow": "#eab308",
     "blue": "#38bdf8",
+    "purple": "#a78bfa",
     "text": "#e5e7eb",
     "muted": "#94a3b8",
 }
 
+
+# ── Mount entrypoint ─────────────────────────────────────────────────
 
 def mount_dashboard(server):
     """Mount the Plotly Dash dashboard on the shared Flask server."""
@@ -42,11 +93,11 @@ def mount_dashboard(server):
         @server.get("/dashboard/")
         def dashboard_unavailable() -> Response:
             return Response(
-                "<h1>RoadWatch AI Dashboard</h1><p>Dash is not installed in this environment.</p>",
+                "<h1>RoadWatch AI Dashboard</h1>"
+                "<p>Dash is not installed in this environment.</p>",
                 mimetype="text/html",
             )
-
-        print("[DASH][WARN] Dash is not installed. Serving fallback dashboard route.")
+        print("[DASH][WARN] Dash not installed. Fallback route registered.")
         return None
 
     app = dash.Dash(
@@ -61,8 +112,9 @@ def mount_dashboard(server):
     return app
 
 
+# ── Reusable style helpers ───────────────────────────────────────────
+
 def _panel_style() -> dict:
-    """Shared style for dashboard panels."""
     return {
         "backgroundColor": COLORS["panel"],
         "border": "1px solid #1f2937",
@@ -73,18 +125,19 @@ def _panel_style() -> dict:
 
 
 def _card(title: str, value_id: str, color: str):
-    """Create a statistic card component."""
     return html.Div(
         [
             html.Div(title, style={"color": COLORS["muted"], "fontSize": "12px"}),
-            html.Div(id=value_id, style={"color": color, "fontSize": "30px", "fontWeight": "700"}),
+            html.Div(
+                id=value_id,
+                style={"color": color, "fontSize": "30px", "fontWeight": "700"},
+            ),
         ],
         style=_panel_style(),
     )
 
 
-def _filter_button_style(color: str) -> dict:
-    """Return shared styling for filter buttons."""
+def _btn_style(color: str) -> dict:
     return {
         "backgroundColor": color,
         "color": "#05070d",
@@ -95,37 +148,50 @@ def _filter_button_style(color: str) -> dict:
         "cursor": "pointer",
     }
 
+
 def _chart_layout(title: str) -> dict:
-    """Return shared Plotly chart layout settings."""
     return {
         "title": {"text": title, "font": {"color": COLORS["text"]}},
         "paper_bgcolor": COLORS["panel"],
         "plot_bgcolor": COLORS["panel"],
-        "font": {"color": COLORS["text"], "family": "'IBM Plex Mono', 'Courier New', monospace"},
+        "font": {
+            "color": COLORS["text"],
+            "family": "'IBM Plex Mono', 'Courier New', monospace",
+        },
         "margin": {"l": 40, "r": 20, "t": 50, "b": 30},
     }
 
 
+# ── Layout ───────────────────────────────────────────────────────────
+
 def _build_layout():
-    """Create the dashboard layout."""
     return html.Div(
         [
+            # Auto-refresh every 3 s
             dcc.Interval(id="refresh", interval=3000, n_intervals=0),
             dcc.Store(id="status-filter", data="All"),
+
+            # ── Header ───────────────────────────────────────────
             html.Div(
                 [
                     html.Div(
                         [
-                            html.Div("ROADWATCH AI", style={"fontSize": "36px", "fontWeight": "700"}),
                             html.Div(
-                                "AUTHORITY OPERATIONS CENTER · LIVE",
+                                "ROADWATCH AI",
+                                style={"fontSize": "36px", "fontWeight": "700"},
+                            ),
+                            html.Div(
+                                "AUTHORITY OPERATIONS CENTER - LIVE",
                                 style={"color": COLORS["muted"], "marginTop": "6px"},
                             ),
                         ]
                     ),
                     html.Div(
                         [
-                            html.Div(id="live-clock", style={"fontSize": "20px", "textAlign": "right"}),
+                            html.Div(
+                                id="live-clock",
+                                style={"fontSize": "20px", "textAlign": "right"},
+                            ),
                             html.Div(
                                 "LIVE",
                                 style={
@@ -148,6 +214,8 @@ def _build_layout():
                     "marginBottom": "20px",
                 },
             ),
+
+            # ── Stat cards (/api/stats) ──────────────────────────
             html.Div(
                 [
                     _card("Potholes Detected", "card-total", COLORS["blue"]),
@@ -157,32 +225,76 @@ def _build_layout():
                     _card("High Severity", "card-high", COLORS["orange"]),
                     _card("Fix Rate %", "card-rate", COLORS["green"]),
                 ],
-                style={"display": "grid", "gridTemplateColumns": "repeat(6, 1fr)", "gap": "14px", "marginBottom": "20px"},
+                style={
+                    "display": "grid",
+                    "gridTemplateColumns": "repeat(6, 1fr)",
+                    "gap": "14px",
+                    "marginBottom": "20px",
+                },
             ),
+
+            # ── Charts row 1 (/api/stats) ────────────────────────
             html.Div(
                 [
                     dcc.Graph(id="hourly-chart", style=_panel_style()),
                     dcc.Graph(id="status-chart", style=_panel_style()),
                     dcc.Graph(id="severity-chart", style=_panel_style()),
                 ],
-                style={"display": "grid", "gridTemplateColumns": "1.5fr 1fr 1fr", "gap": "14px", "marginBottom": "20px"},
+                style={
+                    "display": "grid",
+                    "gridTemplateColumns": "1.5fr 1fr 1fr",
+                    "gap": "14px",
+                    "marginBottom": "20px",
+                },
             ),
+
+            # ── Charts row 2 (/api/stats) ────────────────────────
             html.Div(
                 [
                     dcc.Graph(id="zone-chart", style=_panel_style()),
                     dcc.Graph(id="funnel-chart", style=_panel_style()),
                 ],
-                style={"display": "grid", "gridTemplateColumns": "1.5fr 1fr", "gap": "14px", "marginBottom": "20px"},
+                style={
+                    "display": "grid",
+                    "gridTemplateColumns": "1.5fr 1fr",
+                    "gap": "14px",
+                    "marginBottom": "20px",
+                },
             ),
-            html.Div(id="zone-progress", style={**_panel_style(), "marginBottom": "20px"}),
+
+            # ── Zone progress (/api/potholes) ────────────────────
+            html.Div(
+                id="zone-progress",
+                style={**_panel_style(), "marginBottom": "20px"},
+            ),
+
+            # ── Hotspot zones (/api/hotspots) ────────────────────
+            html.Div(
+                [
+                    html.Div(
+                        "HOTSPOT ZONES",
+                        style={
+                            "fontSize": "16px",
+                            "fontWeight": "700",
+                            "color": COLORS["orange"],
+                            "marginBottom": "14px",
+                            "letterSpacing": "1px",
+                        },
+                    ),
+                    html.Div(id="hotspot-list"),
+                ],
+                style={**_panel_style(), "marginBottom": "20px"},
+            ),
+
+            # ── Live table with filters (/api/potholes) ─────────
             html.Div(
                 [
                     html.Div(
                         [
-                            html.Button("All", id="filter-all", n_clicks=0, style=_filter_button_style(COLORS["blue"])),
-                            html.Button("Pending", id="filter-pending", n_clicks=0, style=_filter_button_style(COLORS["red"])),
-                            html.Button("In Progress", id="filter-progress", n_clicks=0, style=_filter_button_style(COLORS["yellow"])),
-                            html.Button("Fixed", id="filter-fixed", n_clicks=0, style=_filter_button_style(COLORS["green"])),
+                            html.Button("All", id="filter-all", n_clicks=0, style=_btn_style(COLORS["blue"])),
+                            html.Button("Pending", id="filter-pending", n_clicks=0, style=_btn_style(COLORS["red"])),
+                            html.Button("In Progress", id="filter-progress", n_clicks=0, style=_btn_style(COLORS["yellow"])),
+                            html.Button("Fixed", id="filter-fixed", n_clicks=0, style=_btn_style(COLORS["green"])),
                         ],
                         style={"display": "flex", "gap": "10px", "marginBottom": "12px"},
                     ),
@@ -198,7 +310,11 @@ def _build_layout():
                             {"name": "Time", "id": "timestamp"},
                         ],
                         style_as_list_view=True,
-                        style_header={"backgroundColor": "#172033", "color": COLORS["text"], "border": "none"},
+                        style_header={
+                            "backgroundColor": "#172033",
+                            "color": COLORS["text"],
+                            "border": "none",
+                        },
                         style_cell={
                             "backgroundColor": COLORS["panel"],
                             "color": COLORS["text"],
@@ -230,9 +346,11 @@ def _build_layout():
     )
 
 
-def _register_callbacks(app) -> None:
-    """Register dashboard callbacks."""
+# ── Callbacks ────────────────────────────────────────────────────────
 
+def _register_callbacks(app) -> None:
+
+    # ── Cards  <-  /api/stats logic ──────────────────────────────────
     @app.callback(
         Output("card-total", "children"),
         Output("card-pending", "children"),
@@ -243,19 +361,19 @@ def _register_callbacks(app) -> None:
         Output("live-clock", "children"),
         Input("refresh", "n_intervals"),
     )
-    def update_cards(_: int):
-        counts = get_counts()
-        fix_rate = round((counts["fixed"] / counts["total"]) * 100, 2) if counts["total"] else 0.0
+    def update_cards(_):
+        s = _data_stats()
         return (
-            counts["total"],
-            counts["pending"],
-            counts["in_progress"],
-            counts["fixed"],
-            counts["high_severity"],
-            f"{fix_rate}%",
+            s.get("total", 0),
+            s.get("pending", 0),
+            s.get("in_progress", 0),
+            s.get("fixed", 0),
+            s.get("high_severity", 0),
+            f"{s.get('fix_rate', 0)}%",
             datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         )
 
+    # ── Charts  <-  /api/stats + /api/potholes logic ────────────────
     @app.callback(
         Output("hourly-chart", "figure"),
         Output("status-chart", "figure"),
@@ -265,90 +383,152 @@ def _register_callbacks(app) -> None:
         Output("zone-progress", "children"),
         Input("refresh", "n_intervals"),
     )
-    def update_charts(_: int):
-        hourly = get_hourly_counts(hours=8)
-        statuses = get_status_counts()
-        severities = get_severity_counts()
-        zones = get_zone_counts()
-        counts = get_counts()
-        records = get_all_potholes(limit=10000)
+    def update_charts(_):
+        s = _data_stats()
+        records = _data_potholes(limit=10000)
 
+        # Hourly area chart
+        hourly = s.get("hourly", [])
         hourly_fig = go.Figure(
             go.Scatter(
-                x=[item["hour"] for item in hourly],
-                y=[item["count"] for item in hourly],
+                x=[h["hour"] for h in hourly],
+                y=[h["count"] for h in hourly],
                 fill="tozeroy",
                 line={"color": COLORS["blue"], "width": 3},
             )
         )
         hourly_fig.update_layout(_chart_layout("Hourly Detections"))
 
+        # Status donut
+        st = s.get("status_counts", {"Pending": 0, "Fixed": 0, "In Progress": 0})
         status_fig = go.Figure(
             go.Pie(
-                labels=list(statuses.keys()),
-                values=list(statuses.values()),
+                labels=list(st.keys()),
+                values=list(st.values()),
                 hole=0.55,
                 marker={"colors": [COLORS["red"], COLORS["green"], COLORS["yellow"]]},
             )
         )
         status_fig.update_layout(_chart_layout("Repair Status"))
 
+        # Severity donut
+        sv = s.get("severity_counts", {"High": 0, "Medium": 0, "Low": 0})
         severity_fig = go.Figure(
             go.Pie(
-                labels=list(severities.keys()),
-                values=list(severities.values()),
+                labels=list(sv.keys()),
+                values=list(sv.values()),
                 hole=0.55,
                 marker={"colors": [COLORS["orange"], COLORS["yellow"], COLORS["blue"]]},
             )
         )
         severity_fig.update_layout(_chart_layout("Severity Split"))
 
+        # Zone horizontal bar
+        zones = s.get("zones", [])
         zone_fig = go.Figure(
             go.Bar(
-                x=[item["count"] for item in zones],
-                y=[item["zone"] for item in zones],
+                x=[z["count"] for z in zones],
+                y=[z["zone"] for z in zones],
                 orientation="h",
                 marker={"color": COLORS["blue"]},
             )
         )
         zone_fig.update_layout(_chart_layout("Zones Ranked"))
 
+        # Repair funnel
         funnel_fig = go.Figure(
             go.Funnel(
                 y=["Detected", "In Progress", "Fixed"],
-                x=[counts["total"], counts["in_progress"], counts["fixed"]],
+                x=[s.get("total", 0), s.get("in_progress", 0), s.get("fixed", 0)],
                 marker={"color": [COLORS["blue"], COLORS["yellow"], COLORS["green"]]},
             )
         )
         funnel_fig.update_layout(_chart_layout("Repair Funnel"))
 
-        progress_blocks = []
-        for item in zones[:8]:
-            zone = item["zone"]
-            total = item["count"]
-            fixed_zone = sum(1 for record in records if record.get("zone") == zone and record.get("status") == "Fixed")
-            resolved = round((fixed_zone / total) * 100, 2) if total else 0.0
-            progress_blocks.append(
+        # Zone progress bars (needs individual records)
+        progress = []
+        for z in zones[:8]:
+            name = z["zone"]
+            total = z["count"]
+            fixed_n = sum(
+                1 for r in records
+                if r.get("zone") == name and r.get("status") == "Fixed"
+            )
+            pct = round((fixed_n / total) * 100, 2) if total else 0.0
+            progress.append(
                 html.Div(
                     [
-                        html.Div(f"{zone} · {resolved}%", style={"marginBottom": "6px"}),
+                        html.Div(f"{name}  -  {pct}%", style={"marginBottom": "6px"}),
                         html.Div(
                             html.Div(
                                 style={
-                                    "width": f"{resolved}%",
+                                    "width": f"{pct}%",
                                     "height": "10px",
                                     "backgroundColor": COLORS["green"],
                                     "borderRadius": "999px",
                                 }
                             ),
-                            style={"backgroundColor": "#1f2937", "borderRadius": "999px"},
+                            style={
+                                "backgroundColor": "#1f2937",
+                                "borderRadius": "999px",
+                            },
                         ),
                     ],
                     style={"marginBottom": "14px"},
                 )
             )
-        return hourly_fig, status_fig, severity_fig, zone_fig, funnel_fig, progress_blocks
 
+        return hourly_fig, status_fig, severity_fig, zone_fig, funnel_fig, progress
+
+    # ── Hotspots  <-  /api/hotspots logic ────────────────────────────
+    @app.callback(
+        Output("hotspot-list", "children"),
+        Input("refresh", "n_intervals"),
+    )
+    def update_hotspots(_):
+        hotspots = _data_hotspots()
+        if not hotspots:
+            return html.Div(
+                "No hotspot zones detected.",
+                style={"color": COLORS["muted"]},
+            )
+
+        chips = []
+        for spot in hotspots:
+            zone = spot.get("zone", "Unknown")
+            count = spot.get("count", 0)
+            chips.append(
+                html.Div(
+                    [
+                        html.Span(zone, style={"fontWeight": "700"}),
+                        html.Span(
+                            f"  {count}",
+                            style={
+                                "marginLeft": "8px",
+                                "backgroundColor": COLORS["red"],
+                                "color": "#fff",
+                                "borderRadius": "999px",
+                                "padding": "2px 10px",
+                                "fontSize": "12px",
+                                "fontWeight": "700",
+                            },
+                        ),
+                    ],
+                    style={
+                        "display": "inline-flex",
+                        "alignItems": "center",
+                        "backgroundColor": "#1f2937",
+                        "borderRadius": "12px",
+                        "padding": "10px 16px",
+                        "marginRight": "10px",
+                        "marginBottom": "10px",
+                        "border": f"1px solid {COLORS['orange']}44",
+                    },
+                )
+            )
+        return html.Div(chips, style={"display": "flex", "flexWrap": "wrap"})
+
+    # ── Table status filter ──────────────────────────────────────────
     @app.callback(
         Output("status-filter", "data"),
         Input("filter-all", "n_clicks"),
@@ -357,8 +537,12 @@ def _register_callbacks(app) -> None:
         Input("filter-fixed", "n_clicks"),
         State("status-filter", "data"),
     )
-    def update_filter(_: int, __: int, ___: int, ____: int, current: str):
-        trigger = callback_context.triggered[0]["prop_id"].split(".")[0] if callback_context.triggered else ""
+    def update_filter(_a, _b, _c, _d, current):
+        trigger = (
+            callback_context.triggered[0]["prop_id"].split(".")[0]
+            if callback_context.triggered
+            else ""
+        )
         mapping = {
             "filter-all": "All",
             "filter-pending": "Pending",
@@ -367,15 +551,23 @@ def _register_callbacks(app) -> None:
         }
         return mapping.get(trigger, current)
 
+    # ── Live table  <-  /api/potholes logic ──────────────────────────
     @app.callback(
         Output("live-table", "data"),
         Input("refresh", "n_intervals"),
         Input("status-filter", "data"),
     )
-    def update_table(_: int, status_filter: str):
-        records = get_all_potholes(limit=20)
+    def update_table(_, status_filter):
+        records = _data_potholes(limit=50)
         if status_filter != "All":
-            records = [record for record in records if record.get("status") == status_filter]
-        for record in records:
-            record["maps_link"] = f"[Open Map]({record.get('maps_link', '#')})"
-        return records
+            records = [r for r in records if r.get("status") == status_filter]
+        # Build fresh dicts so we never mutate the in-memory store
+        rows = []
+        for r in records:
+            row = dict(r)
+            link = row.get("maps_link", "#")
+            # Guard: only wrap if not already wrapped
+            if not link.startswith("[Open Map]"):
+                row["maps_link"] = f"[Open Map]({link})"
+            rows.append(row)
+        return rows

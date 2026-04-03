@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Dict
 
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, redirect, request
 
 from config import Config
 from dashboard import mount_dashboard
@@ -11,6 +11,7 @@ from storage import (
     get_all_potholes,
     get_counts,
     get_hourly_counts,
+    get_severity_counts,
     get_status_counts,
     get_zone_counts,
     initialize_storage,
@@ -82,6 +83,7 @@ def register_routes(app: Flask) -> None:
                 "hourly": get_hourly_counts(hours=8),
                 "zones": get_zone_counts(),
                 "status_counts": get_status_counts(),
+                "severity_counts": get_severity_counts(),
             }
         )
 
@@ -110,13 +112,7 @@ def register_routes(app: Flask) -> None:
 
     @app.get("/")
     def index() -> Any:
-        return jsonify(
-            {
-                "name": "RoadWatch AI",
-                "dashboard": f"http://localhost:{Config.FLASK_PORT}/dashboard/",
-                "api_base": f"http://localhost:{Config.FLASK_PORT}/api/",
-            }
-        )
+        return redirect("/dashboard/")
 
 
 app = create_app()
