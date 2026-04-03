@@ -85,7 +85,6 @@ else:
 
 img_count = 0
 while True:
-
     frame = None
     if source_type == 'image':
         if img_count >= len(imgs_list):
