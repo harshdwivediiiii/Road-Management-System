@@ -1,0 +1,17 @@
+[
+  { "hazard_type": "Pothole", "zone": "North", "address": "123 Maple St", "severity": "High", "status": "Pending", "maps_link": "https://maps.google.com/?q=28.61,77.20", "timestamp": "2024-05-20T10:30:00Z" },
+  { "hazard_type": "Pothole", "zone": "South", "address": "456 Oak Ave", "severity": "Medium", "status": "In Progress", "maps_link": "https://maps.google.com/?q=28.62,77.21", "timestamp": "2024-05-20T11:15:00Z" },
+  { "hazard_type": "Pothole", "zone": "East", "address": "789 Pine Rd", "severity": "Low", "status": "Fixed", "maps_link": "https://maps.google.com/?q=28.63,77.22", "timestamp": "2024-05-20T09:45:00Z" },
+  { "hazard_type": "Pothole", "zone": "West", "address": "101 Cedar Ln", "severity": "High", "status": "Pending", "maps_link": "https://maps.google.com/?q=28.64,77.23", "timestamp": "2024-05-20T12:00:00Z" },
+  { "hazard_type": "Pothole", "zone": "North", "address": "202 Birch Blvd", "severity": "Medium", "status": "In Progress", "maps_link": "https://maps.google.com/?q=28.65,77.24", "timestamp": "2024-05-20T13:20:00Z" },
+  { "hazard_type": "Pothole", "zone": "South", "address": "303 Elm Sq", "severity": "Low", "status": "Fixed", "maps_link": "https://maps.google.com/?q=28.66,77.25", "timestamp": "2024-05-20T14:10:00Z" },
+  { "hazard_type": "Pothole", "zone": "East", "address": "404 Walnut Dr", "severity": "High", "status": "Pending", "maps_link": "https://maps.google.com/?q=28.67,77.26", "timestamp": "2024-05-20T15:05:00Z" },
+  { "hazard_type": "Pothole", "zone": "West", "address": "505 Cherry Ct", "severity": "Medium", "status": "In Progress", "maps_link": "https://maps.google.com/?q=28.68,77.27", "timestamp": "2024-05-20T16:40:00Z" },
+  { "hazard_type": "Pothole", "zone": "North", "address": "606 Ash Wy", "severity": "Low", "status": "Fixed", "maps_link": "https://maps.google.com/?q=28.69,77.28", "timestamp": "2024-05-20T08:30:00Z" },
+  { "hazard_type": "Pothole", "zone": "South", "address": "707 Willow Pl", "severity": "High", "status": "Pending", "maps_link": "https://maps.google.com/?q=28.70,77.29", "timestamp": "2024-05-20T17:15:00Z" },
+  { "hazard_type": "Pothole", "zone": "East", "address": "808 Spruce St", "severity": "Medium", "status": "In Progress", "maps_link": "https://maps.google.com/?q=28.71,77.30", "timestamp": "2024-05-20T18:50:00Z" },
+  { "hazard_type": "Pothole", "zone": "West", "address": "909 Poplar Dr", "severity": "Low", "status": "Fixed", "maps_link": "https://maps.google.com/?q=28.72,77.31", "timestamp": "2024-05-20T19:25:00Z" },
+  { "hazard_type": "Pothole", "zone": "North", "address": "111 Juniper Rd", "severity": "High", "status": "Pending", "maps_link": "https://maps.google.com/?q=28.73,77.32", "timestamp": "2024-05-20T20:10:00Z" },
+  { "hazard_type": "Pothole", "zone": "South", "address": "222 Laurel Ln", "severity": "Medium", "status": "In Progress", "maps_link": "https://maps.google.com/?q=28.74,77.33", "timestamp": "2024-05-20T21:45:00Z" },
+  { "hazard_type": "Pothole", "zone": "East", "address": "333 Hickory Blvd", "severity": "Low", "status": "Fixed", "maps_link": "https://maps.google.com/?q=28.75,77.34", "timestamp": "2024-05-20T22:30:00Z" }
+]
