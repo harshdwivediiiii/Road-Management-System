@@ -4,6 +4,9 @@ import os
 from typing import Any, Dict
 
 from flask import Flask, jsonify, request
+from dotenv import load_dotenv
+
+load_dotenv()
 
 from google_maps import GoogleMapsClient, build_google_maps_url
 from storage import build_report_store
