@@ -1,60 +1,89 @@
 from __future__ import annotations
 
-import os
+import argparse
+import time
+from typing import Any
 
-import av
-import streamlit as st
-from streamlit_webrtc import WebRtcMode, webrtc_streamer
+import cv2
 
-from monitoring import GPSProvider, RoadHazardMonitor
-
-
-MODEL_PATH = "models/LessAccurate Model.pt"
-
-
-@st.cache_resource
-def get_monitor(confidence_threshold: float) -> RoadHazardMonitor | None:
-    if not os.path.exists(MODEL_PATH):
-        return None
-    return RoadHazardMonitor(MODEL_PATH, confidence_threshold=confidence_threshold)
+from config import Config
+from reporter import create_and_save_report
+from yolo_detect import detect_frame, ensure_output_dir
 
 
-def main() -> None:
-    st.title("Road Infrastructure Monitoring Dashboard")
-    st.caption("Live detection for potholes, cracks, speed breakers, and other road hazards.")
+DEFAULT_LAT = 12.9716
+DEFAULT_LNG = 77.5946
 
-    confidence = st.sidebar.slider("Confidence Threshold", 0.0, 1.0, 0.4, 0.05)
-    latitude = st.sidebar.number_input("Latitude", value=28.6139, format="%.6f")
-    longitude = st.sidebar.number_input("Longitude", value=77.2090, format="%.6f")
-    gps_provider = GPSProvider(latitude, longitude)
-    monitor = get_monitor(confidence)
 
-    if monitor is None:
-        st.error(f"Model not found at {MODEL_PATH}")
+def build_parser() -> argparse.ArgumentParser:
+    """Create the CLI argument parser for the camera utility."""
+    parser = argparse.ArgumentParser(description="RoadWatch AI live camera monitor")
+    parser.add_argument("--source", default="0", help="Camera index or path to a video file")
+    return parser
+
+
+def open_source(source: str) -> cv2.VideoCapture:
+    """Open a webcam index or video file source."""
+    try:
+        capture_source: Any = int(source)
+    except ValueError:
+        capture_source = source
+    return cv2.VideoCapture(capture_source)
+
+
+def run_camera(source: str = "0") -> None:
+    """Run live monitoring over webcam or a video file."""
+    ensure_output_dir()
+    capture = open_source(source)
+    if not capture.isOpened():
+        print(f"[CAMERA][ERROR] Unable to open source: {source}")
         return
 
-    def video_frame_callback(frame):
-        image = frame.to_ndarray(format="bgr24")
-        detections = monitor.detect(image, gps_provider=gps_provider, include_image=False)
-        annotated = monitor.annotate(image.copy(), detections)
-        return av.VideoFrame.from_ndarray(annotated, format="bgr24")
+    frame_index = 0
+    detection_count = 0
+    processed_count = 0
+    stats_started = time.time()
 
-    webrtc_streamer(
-        key="road-monitoring",
-        mode=WebRtcMode.SENDRECV,
-        video_frame_callback=video_frame_callback,
-        async_processing=True,
-        media_stream_constraints={
-            "video": {
-                "width": {"ideal": 1280},
-                "height": {"ideal": 720},
-                "frameRate": {"ideal": 30},
-            },
-            "audio": False,
-        },
-        rtc_configuration={"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]},
-    )
+    while True:
+        success, frame = capture.read()
+        if not success or frame is None:
+            print("[CAMERA] End of stream or unable to read frame.")
+            break
+
+        annotated_frame = frame.copy()
+        if frame_index % Config.DETECTION_INTERVAL == 0:
+            processed_count += 1
+            result = detect_frame(frame)
+            annotated_frame = result["annotated_frame"]
+            if result["detected"]:
+                detection_count += 1
+                report = create_and_save_report(
+                    lat=DEFAULT_LAT,
+                    lng=DEFAULT_LNG,
+                    image_path=result["image_path"],
+                    severity=result["severity"],
+                    confidence=result["confidence"],
+                )
+                print(f"[CAMERA][DETECTION] Saved report {report.get('_id', 'n/a')} at {report['address']}")
+
+        cv2.imshow("RoadWatch AI Live Feed", annotated_frame)
+        if cv2.waitKey(1) & 0xFF == ord("q"):
+            print("[CAMERA] Quit requested.")
+            break
+
+        elapsed = time.time() - stats_started
+        if elapsed >= 30:
+            print(
+                f"[CAMERA][STATS] frames={frame_index + 1} processed={processed_count} detections={detection_count}"
+            )
+            stats_started = time.time()
+
+        frame_index += 1
+
+    capture.release()
+    cv2.destroyAllWindows()
 
 
 if __name__ == "__main__":
-    main()
+    args = build_parser().parse_args()
+    run_camera(args.source)

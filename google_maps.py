@@ -2,46 +2,35 @@ from __future__ import annotations
 
 from typing import Any, Dict, Optional
 
-import requests
-
+from geotagger import get_address, get_maps_link, google_maps_ready
 
 
 class GoogleMapsClient:
+    """Compatibility wrapper around the new geotagger helpers."""
+
     def __init__(self, api_key: Optional[str]) -> None:
         self.api_key = api_key
 
     @property
     def enabled(self) -> bool:
-        return bool(self.api_key)
+        """Return whether maps support is configured."""
+        return google_maps_ready()
 
     def reverse_geocode(self, latitude: Optional[float], longitude: Optional[float]) -> Optional[Dict[str, Any]]:
-        if not self.enabled or latitude is None or longitude is None:
+        """Return a small reverse geocode payload."""
+        if latitude is None or longitude is None:
             return None
-
-        response = requests.get(
-            "https://maps.googleapis.com/maps/api/geocode/json",
-            params={
-                "latlng": f"{latitude},{longitude}",
-                "key": self.api_key,
-            },
-            timeout=10,
-        )
-        response.raise_for_status()
-        payload = response.json()
-
-        results = payload.get("results", [])
-        if not results:
-            return None
-
-        top_result = results[0]
+        address = get_address(latitude, longitude)
         return {
-            "formatted_address": top_result.get("formatted_address"),
-            "place_id": top_result.get("place_id"),
-            "types": top_result.get("types", []),
+            "formatted_address": address,
+            "place_id": None,
+            "types": [],
+            "google_maps_url": get_maps_link(latitude, longitude),
         }
 
 
 def build_google_maps_url(latitude: Optional[float], longitude: Optional[float]) -> Optional[str]:
+    """Build a browser-friendly Google Maps URL."""
     if latitude is None or longitude is None:
         return None
-    return f"https://www.google.com/maps/search/?api=1&query={latitude},{longitude}"
+    return get_maps_link(latitude, longitude)
