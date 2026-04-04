@@ -1,0 +1,96 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+    font-family: 'Noto Sans', 'Segoe UI', 'Roboto', Arial, sans-serif;
+    background: #F4F6F9;
+    color: #374151;
+    -webkit-font-smoothing: antialiased;
+}
+::-webkit-scrollbar { width: 7px; }
+::-webkit-scrollbar-track { background: #E5E7EB; }
+::-webkit-scrollbar-thumb { background: #9CA3AF; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #6B7280; }
+
+/* ── Tri-colour banner ── */
+.goi-tricolour {
+    position: fixed; top: 0; left: 0; right: 0; height: 5px; z-index: 9999;
+    background: linear-gradient(90deg,
+        #FF9933 0%, #FF9933 33.33%,
+        #FFFFFF 33.33%, #FFFFFF 66.66%,
+        #138808 66.66%, #138808 100%);
+}
+
+/* ── STAT CARD — hover lift ── */
+.stat-card {
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+.stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.10), 0 2px 6px rgba(0,0,0,0.06) !important;
+}
+
+/* ── CHART PANEL — fade-in on load ── */
+@keyframes fadeSlideUp {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+.chart-panel {
+    animation: fadeSlideUp 0.5s ease-out both;
+}
+.chart-panel:nth-child(1) { animation-delay: 0.05s; }
+.chart-panel:nth-child(2) { animation-delay: 0.15s; }
+.chart-panel:nth-child(3) { animation-delay: 0.25s; }
+
+/* ── PROGRESS BAR — animated grow ── */
+@keyframes growWidth {
+    from { width: 0 !important; }
+}
+.progress-fill {
+    animation: growWidth 0.8s ease-out both;
+}
+
+/* ── TABLE ROW — hover & active effects ── */
+.dash-spreadsheet-container .dash-spreadsheet-inner td,
+.dash-spreadsheet-container .dash-spreadsheet-inner th {
+    font-family: 'Roboto Mono', 'Consolas', monospace !important;
+    font-size: 12px !important;
+    transition: background-color 0.15s ease, transform 0.1s ease;
+}
+.dash-spreadsheet-container .dash-spreadsheet-inner tr:hover td {
+    background-color: #EEF2FF !important;
+    cursor: pointer;
+}
+.dash-spreadsheet-container .dash-spreadsheet-inner tr:active td {
+    background-color: #E0E7FF !important;
+    transform: scale(0.995);
+}
+.dash-spreadsheet-container .dash-spreadsheet-inner tr {
+    transition: all 0.15s ease;
+}
+.dash-spreadsheet-container .dash-spreadsheet-inner tr:hover {
+    box-shadow: inset 3px 0 0 #FF9933;
+}
+
+/* ── FILTER BUTTONS ── */
+.btn-filter {
+    background-color: transparent;
+    border-radius: 6px;
+    padding: 7px 16px;
+    font-weight: 600;
+    font-size: 12px;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    transition: all 0.2s ease;
+    font-family: inherit;
+}
+.btn-filter-blue { border: 2px solid #2563EB; color: #2563EB; }
+.btn-filter-blue:hover, .btn-filter-blue:active { background-color: #2563EB; color: #fff; }
+
+.btn-filter-red { border: 2px solid #DC2626; color: #DC2626; }
+.btn-filter-red:hover, .btn-filter-red:active { background-color: #DC2626; color: #fff; }
+
+.btn-filter-amber { border: 2px solid #D97706; color: #D97706; }
+.btn-filter-amber:hover, .btn-filter-amber:active { background-color: #D97706; color: #fff; }
+
+.btn-filter-green { border: 2px solid #16A34A; color: #16A34A; }
+.btn-filter-green:hover, .btn-filter-green:active { background-color: #16A34A; color: #fff; }

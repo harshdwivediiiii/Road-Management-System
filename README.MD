@@ -1,7 +1,5 @@
 # RoadWatch AI - Automated Road Infrastructure Monitoring
 
-![RoadWatch AI Banner](file:///C:/Users/alokp/.gemini/antigravity/brain/59f8052c-a37d-46d4-8ffb-bc476f861048/roadwatch_ai_banner_1775280563490.png)
-
 ## 🌟 Overview
 
 **RoadWatch AI** is a cutting-edge **Computer Vision-as-a-Service (CVaaS)** platform engineered to modernize municipal infrastructure management. By synthesizing deep learning inferences with real-time geospatial telemetry, RoadWatch AI converts raw visual data into a **High-Fidelity Digital Twin** of road health, enabling predictive maintenance and rapid response workflows.
@@ -164,4 +162,4 @@ CONFIDENCE_THRESHOLD=0.5
 This project is licensed under the MIT License - see the LICENSE file for details.
 
 ---
-*Created by [Your Name](https://github.com/yourusername)*
+

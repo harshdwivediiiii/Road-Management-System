@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700;800&family=Roboto+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/camera.css">
+</head>
+<body>
+    <div class="tricolour"></div>
+
+    <div class="header">
+        <div class="brand">
+            <span class="brand-icon">☸</span>
+            <div>
+                <div class="brand-title">ROADWATCH <span>AI</span></div>
+                <div class="brand-sub">{{ subtitle }}</div>
+            </div>
+        </div>
+        <div class="controls">
+            <label>Camera Source:</label>
+            <select id="camera-select"></select>
+            <a href="{{ dashboard_url }}" class="btn-end">✕ End Session</a>
+        </div>
+    </div>
+
+    <div class="main-stage">
+        <div class="video-wrapper">
+            <video id="videoElement" autoplay playsinline></video>
+            <canvas id="overlayCanvas"></canvas>
+            <div class="badge badge-status" id="statusText">
+                <span class="dot dot-green"></span>INITIALIZING...
+            </div>
+            <div class="badge badge-label">{{ feed_label }}</div>
+            <div class="badge badge-count" id="detectionCounter">
+                DETECTIONS: <strong>0</strong>
+            </div>
+            <div class="badge badge-time" id="timeOverlay"></div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <span>{{ footer_left }}</span>
+        <span>{{ footer_right }}</span>
+    </div>
+
+    <canvas id="captureCanvas" style="display:none;"></canvas>
+
+    <script id="config-data" type="application/json">
+        {
+            "api": "{{ detect_url }}",
+            "rate": {{ detect_interval }},
+            "c_india_green": "{{ c.india_green }}",
+            "c_text": "{{ c.text }}",
+            "c_saffron": "{{ c.saffron }}",
+            "c_header_bg": "{{ c.header_bg }}",
+            "c_panel_border": "{{ c.panel_border }}",
+            "c_red": "{{ c.red }}",
+            "c_blue": "{{ c.blue }}",
+            "c_bg": "{{ c.bg }}"
+        }
+    </script>
+    <script src="/static/js/camera.js"></script>
+</body>
+</html>

@@ -1,0 +1,23 @@
+# Version control
+.git/
+.gitignore
+
+# Virtual Environment
+venv/
+env/
+.env
+
+# Python Caches
+__pycache__/
+*.pyc
+
+# Local Development Data/Artifacts
+Dataset/
+runs/
+Model Training.ipynb
+ModelMongo/
+Test/
+
+# Avoid copying potentially large test images if they aren't part of the core app repo
+# *.jpg
+# *.mp4
