@@ -1,3 +1,5 @@
+app = Flask(__name__)
+
 from __future__ import annotations
 
 from typing import Any, Dict
@@ -23,6 +25,10 @@ from yolo_detect import get_model_status
 import subprocess
 import sys
 import os
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
 
 import base64
 import numpy as np
