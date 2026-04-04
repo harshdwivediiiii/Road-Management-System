@@ -13,6 +13,10 @@ from yolo_detect import detect_frame
 def run_live_monitor(source: str | int = 0) -> None:
     """Run live monitoring from a webcam index or video file path."""
     capture = cv2.VideoCapture(source)
+    
+    if isinstance(source, str) and source.startswith("http"):
+        capture.set(cv2.CAP_PROP_BUFFERSIZE, 3)
+        
     if not capture.isOpened():
         print(f"[CAMERA][ERROR] Unable to open source: {source}")
         return
@@ -78,8 +82,14 @@ def parse_args() -> argparse.Namespace:
 
 
 def normalize_source(raw_source: str) -> str | int:
-    """Convert numeric source strings to webcam indices."""
-    return int(raw_source) if raw_source.isdigit() else raw_source
+    """Convert numeric source strings to webcam indices, or format IP addresses."""
+    raw_source = raw_source.strip()
+    if raw_source.isdigit():
+        return int(raw_source)
+    if not raw_source.startswith("http") and ("." in raw_source or ":" in raw_source) and ("/" not in raw_source and "\\" not in raw_source):
+        # Format raw IP:PORT from CLI to the proper IP Webcam video URL
+        return f"http://{raw_source}/video"
+    return raw_source
 
 
 if __name__ == "__main__":
