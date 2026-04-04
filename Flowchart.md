@@ -1,48 +1,50 @@
-# RoadWatch AI - Project Flowchart
+# RoadWatch AI - System Architecture & Data Flow
 
-This document illustrates the high-level architecture and data flow of the RoadWatch AI monitoring system, based on the **SEE IT → TAG IT → DONE** workflow.
+This document details the **Asynchronous Computer Vision & Geospatial Telemetry Pipeline** that powers RoadWatch AI.
 
-## 🚀 How It Works
+## 🚀 Architectural Blueprint
 
-The system follows a streamlined 6-step process to transform raw camera data into actionable maintenance intelligence.
+The system utilizes a multi-stage lifecycle to transform raw visual telemetry into actionable infrastructure intelligence.
 
 ```mermaid
-graph LR
-    subgraph Step1 ["1. SEE IT"]
-        CAM["Camera Captures Road<br/>(Real-time Video)"]
-        DET["YOLOv8 Detects Hazards<br/>(Potholes & Cracks)"]
+graph TD
+    subgraph S1 ["1. EDGE INFERENCE"]
+        CAM["Live Video Ingestion<br/>(Dashcam / Mobile Feed)"]
+        DET["YOLOv8 Inference Pipeline<br/>(Real-time Object Detection)"]
     end
 
-    subgraph Step2 ["2. TAG IT"]
-        GPS["GPS Tags Location<br/>(Lat / Long)"]
-        API["Data Sent to Server<br/>(Image, Location, Time)"]
+    subgraph S2 ["2. SPATIO-TEMPORAL SYNTHESIS"]
+        GPS["Precision Geolocation Capture<br/>(Lat / Long Metadata)"]
+        GEO["Reverse Geocoding Layer<br/>(Google Maps API Enrichment)"]
+        API["RESTful API Gateway<br/>(Flask Payload Handling)"]
     end
 
-    subgraph Step3 ["3. DONE"]
-        DB["Stored in Database<br/>(Secure Persistence)"]
-        DASH["Dashboard View & Action<br/>(Map & Authorities)"]
+    subgraph S3 ["3. ANALYTICS & PERSISTENCE"]
+        DB["Distributed NoSQL Persistence<br/>(MongoDB Cluster)"]
+        DASH["Real-time Telemetry Dashboard<br/>(Plotly Dash Visualization)"]
     end
 
-    CAM -->|Records Road| DET
-    DET -->|Identifies Hazard| GPS
-    GPS -->|Gets Coordinates| API
-    API -->|Sends via REST| DB
-    DB -->|Actionable Map| DASH
+    CAM -->|Frame Serialization| DET
+    DET -->|Detection Metadata| GPS
+    GPS -->|Enriched Coordinates| GEO
+    GEO -->|Structured Payload| API
+    API -->|Asynchronous Ingestion| DB
+    DB -->|Reactive Data Surface| DASH
 
-    style Step1 fill:#f0f9ff,stroke:#0ea5e9,stroke-width:2px
-    style Step2 fill:#f0fdf4,stroke:#22c55e,stroke-width:2px
-    style Step3 fill:#fff7ed,stroke:#f97316,stroke-width:2px
+    style S1 fill:#f0f9ff,stroke:#0ea5e9,stroke-width:2px
+    style S2 fill:#f0fdf4,stroke:#22c55e,stroke-width:2px
+    style S3 fill:#fff7ed,stroke:#f97316,stroke-width:2px
 ```
 
-## 🛠️ Detailed Architectural Steps
+## 🛠️ Technical Process Decomposition
 
-1.  **Camera Captures Road**: Dashcam or mobile camera records real-time video of the road infrastructure.
-2.  **YOLOv8 Detects Hazards**: Our custom-trained AI model identifies potholes, cracks, and other hazards in the video frames.
-3.  **GPS Tags Location**: The system automatically captures the exact latitude and longitude of the detected hazard using GPS data (or Geotagger module).
-4.  **Data Sent to Server**: The Hazard image, GPS location, and timestamp are securely sent via the API to the central Flask server.
-5.  **Stored in Database**: All detection data is securely saved in a MongoDB database for future access and audit trails.
-6.  **Dashboard View & Action**: Authorities see the hazards visualized on an interactive map and can take immediate action to prioritize repairs.
+1.  **Computer Vision Ingestion**: Real-time video streams (dashcam or mobile) are fed into the high-performance YOLOv8 inference pipeline for localized defect detection.
+2.  **Inference & Classification**: Our optimized deep learning model identifies infrastructure hazards (potholes, cracks, etc.) with high precision and low edge latency.
+3.  **Spatio-Temporal Enrichment**: Detection events are instantly correlated with high-precision GPS telemetry, capturing the exact geographic coordinates of each infrastructure defect.
+4.  **Geographic Resolver**: Automated reverse geocoding via the Google Maps Platform translates raw coordinates into human-readable municipal addresses for actionable reporting.
+5.  **Asynchronous Data Ingestion**: Structured data payloads (hazard snapshots, location metadata, and severity rankings) are securely ingested via the Flask REST API.
+6.  **Distributed Persistence & Visualization**: Aggregated data is persisted in a MongoDB cluster and surfaced via a real-time Plotly Dash dashboard for interactive heatmapping and decision support.
 
 ---
 
-### **SEE IT → TAG IT → DONE**
+### **INGRESS → INFERENCE → INSIGHTS**

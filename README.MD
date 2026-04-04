@@ -4,20 +4,18 @@
 
 ## 🌟 Overview
 
-**RoadWatch AI** is a state-of-the-art vision-based monitoring system designed to revolutionize urban infrastructure maintenance. Leveraging the power of deep learning and real-time geospatial data enrichment, RoadWatch AI transforms standard video feeds into actionable maintenance intelligence.
+**RoadWatch AI** is a cutting-edge **Computer Vision-as-a-Service (CVaaS)** platform engineered to modernize municipal infrastructure management. By synthesizing deep learning inferences with real-time geospatial telemetry, RoadWatch AI converts raw visual data into a **High-Fidelity Digital Twin** of road health, enabling predictive maintenance and rapid response workflows.
 
-### 🚀 Key Features
+### 🚀 Technical Highlights
 
-*   **⚡ Real-Time Detection**: High-accuracy pothole and hazard detection using YOLOv8.
-*   **📍 Precise Geotagging**: Automatic GPS coordinate attachment and reverse geocoding via Google Maps Geocoding API.
-*   **📊 Insightful Dashboard**: Interactive visualization of hazard hotspots, trends, and repair metrics built with Plotly Dash.
-*   **🛠️ Efficient Reporting**: Automated submission of hazard reports for city maintenance teams.
+*   **⚡ Real-Time Inference Pipeline**: High-throughput object detection and classification utilizing an optimized YOLOv8 architecture for instantaneous hazard identification.
+*   **📍 Geospatial Data Synthesis**: Automated spatio-temporal enrichment using high-precision coordinate mapping and Google Maps Reverse Geocoding.
+*   **📊 Dynamic Telemetry Dashboard**: Interactive BI-ready visualization engine for hotspot density analysis, frequency trending, and cluster mapping.
+*   **🛠️ Reactive Incident Orchestration**: End-to-end automated reporting lifecycle, bridging the gap between detection and municipal resolution.
 
 ---
 
-## How it works ?
-
-![How it works](./public//images/how_it_works.jpeg)
+![How it works](./public/images/how_it_works.jpeg)
 
 ## 🛠️ Tech Stack & Tools
 
@@ -31,62 +29,74 @@
 
 ---
 
-## 🏗️ High-Level Architecture (HLA)
+## 🏗️ High-Level Logic & System Architecture (HLL)
 
-The system transforms raw dashcam feeds into actionable infrastructure data through a streamlined **SEE IT → TAG IT → DONE** lifecycle.
+RoadWatch AI operates on a sophisticated **Asynchronous Computer Vision & Geospatial Telemetry Pipeline**. We utilize an edge-first approach where inference is performed in real-time, followed by reactive data enrichment and persistence.
 
 ```mermaid
-graph LR
-    subgraph S1 ["1. SEE IT"]
-        CAM["Camera Captures Road<br/>(Real-time Video)"]
-        DET["YOLOv8 Detects Hazards<br/>(Potholes & Cracks)"]
+graph TD
+    subgraph "A. Edge Inference Layer"
+        CAM["Live Video Stream<br/>(Dashcam / Mobile)"]
+        YOLO["YOLOv8 Inference Engine<br/>(TensorFlow / PyTorch Implementation)"]
     end
 
-    subgraph S2 ["2. TAG IT"]
-        GPS["GPS Tags Location<br/>(Lat / Long)"]
-        API["Data Sent to Server<br/>(Image, Location, Time)"]
+    subgraph "B. Geospatial Enrichment Engine"
+        GPS["NMEA/Exif Location Capture<br/>(Latitude / Longitude)"]
+        GEO["Reverse Geocoding Layer<br/>(Google Maps Geocoding API)"]
     end
 
-    subgraph S3 ["3. DONE"]
-        DB["Stored in Database<br/>(Secure Persistence)"]
-        DASH["Dashboard View & Action<br/>(Map & Authorities)"]
+    subgraph "C. Data Persistence & Insights"
+        API["RESTful API Gateway<br/>(Flask / Python)"]
+        DB[(MongoDB Cluster<br/>NoSQL Persistence)]
+        DASH["Analytics Dashboard<br/>(Plotly Dash / Real-time Telemetry)"]
     end
 
-    CAM -->|Records Road| DET
-    DET -->|Identifies Hazard| GPS
-    GPS -->|Gets Coordinates| API
-    API -->|Sends via REST| DB
-    DB -->|Actionable Map| DASH
+    CAM -->|Frame Buffer| YOLO
+    YOLO -->|Object Bounding Boxes| GPS
+    GPS -->|Geographic Context| GEO
+    GEO -->|Metadata Payload| API
+    API -->|Async Upsert| DB
+    DB -->|Reactive Data Ingestion| DASH
 
-    style S1 fill:#f0f9ff,stroke:#0ea5e9,stroke-width:2px
-    style S2 fill:#f0fdf4,stroke:#22c55e,stroke-width:2px
-    style S3 fill:#fff7ed,stroke:#f97316,stroke-width:2px
+    style CAM fill:#f0f9ff,stroke:#0ea5e9,stroke-width:2px
+    style YOLO fill:#f0f9ff,stroke:#0ea5e9,stroke-width:2px
+    style GPS fill:#f0fdf4,stroke:#22c55e,stroke-width:2px
+    style GEO fill:#f0fdf4,stroke:#22c55e,stroke-width:2px
+    style API fill:#fff7ed,stroke:#f97316,stroke-width:2px
+    style DB fill:#fff7ed,stroke:#f97316,stroke-width:2px
+    style DASH fill:#fff7ed,stroke:#f97316,stroke-width:2px
 ```
 
-### 🔁 The 6-Step Lifecycle
-1.  **Camera Captures Road**: Dashcam records real-time video of the infrastructure.
-2.  **YOLOv8 Detects Hazards**: AI model identifies potholes, cracks, and other hazards.
-3.  **GPS Tags Location**: The system fetches exact latitude and longitude of the hazard.
-4.  **Data Sent to Server**: Image, location, and time are sent via REST API.
-5.  **Stored in Database**: Data is securely saved for future access and repair planning.
-6.  **Dashboard View & Action**: Authorities see hazards on a map and take action fast.
+### 🧠 The Core Technical Cycle
+1.  **Computer Vision Inference**: Real-time object detection using a YOLOv8-powered pipeline tuned for edge latency.
+2.  **Spatio-Temporal Correlation**: Dynamic binding of detection timestamps with high-precision GPS telemetry.
+3.  **Geographic Enrichment**: Automated address resolution via Reverse Geocoding for municipal-ready reporting.
+4.  **Asynchronous Data Ingestion**: Secure transmission of high-dimensional metadata (images, location, severity) via REST API.
+5.  **Multi-Dimensional Persistence**: Distributed NoSQL storage in MongoDB for scalable historical auditing.
+6.  **Real-Time Telemetry Visualization**: Interactive Heat-mapping and Frequency Analysis using Plotly Dash.
 
 ---
-### 📁 Project Structure
+### 📁 Detailed Project Architecture
 
 ```text
 Road-Management-System/
-├── app.py                # Main Flask application (Server entrypoint)
-├── dashboard.py          # Plotly Dash interactive frontend
-├── config.py             # Global environment & project configuration
-├── storage.py            # MongoDB and local storage operations
-├── yolo_detect.py        # Core YOLOv8 inference wrapper
-├── LiveCamera.py         # Subprocess for real-time camera handling
-├── reporter.py           # Automated report formatting
-├── geotagger.py          # Geographic enrichment helper
-├── requirements.txt      # Python dependencies
-├── .env                  # Configuration keys (API Keys, DB URIs)
-└── static/               # Repository for auto-generated hazard images
+├── app.py                # RESTful API Backend (Flask Layer)
+├── dashboard.py          # Analytics & Telemetry Dashboard (Plotly Dash)
+├── yolo_detect.py        # Computer Vision Logic (YOLOv8 Wrapper)
+├── storage.py            # Data Ingestion & Persistence (MongoDB Handler)
+├── LiveCamera.py         # Subprocess-driven Real-time Stream Controller
+├── geotagger.py          # Geospatial Enrichment & Coordinate Handler
+├── google_maps.py        # Integration with Google Maps Platform API
+├── reporter.py           # Automated Incident Reporting Logic
+├── monitoring.py         # System Health & Surveillance Diagnostics
+├── config.py             # Global Hyperparameters & Environment State
+├── .env                  # Encrypted Secret Store (API Keys, DB URIs)
+│
+├── static/               # Artifact Storage (Detected Pothole Snapshots)
+├── public/               # Static Assets & Frontend Resources
+├── models/               # Serialized Inferences & Weights (.pt / .weights)
+├── runs/                 # ML Training Cycles & Evaluation Logs
+└── requirements.txt      # Core Dependency Manifest
 ```
 
 ---
