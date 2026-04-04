@@ -20,6 +20,10 @@ from storage import (
 )
 from yolo_detect import get_model_status
 
+import subprocess
+import sys
+import os
+
 
 def create_app() -> Flask:
     """Create and configure the Flask application."""
@@ -34,7 +38,9 @@ def create_app() -> Flask:
     print("RoadWatch AI Starting...")
     print(f"Model loaded: {get_model_status()}")
     print(f"MongoDB {'connected' if Config.DB_CONNECTED else 'fallback-active'}")
-    print(f"Google Maps API {'ready' if Config.GOOGLE_MAPS_API_KEY else 'not configured'}")
+    print(
+        f"Google Maps API {'ready' if Config.GOOGLE_MAPS_API_KEY else 'not configured'}"
+    )
     print(f"Dashboard: http://localhost:{Config.FLASK_PORT}/dashboard/")
     print(f"API Base:  http://localhost:{Config.FLASK_PORT}/api/")
     return app
@@ -109,6 +115,26 @@ def register_routes(app: Flask) -> None:
                 "model": get_model_status(),
             }
         )
+
+
+    # Inside register_routes(app) in app.py
+    @app.get("/camera/start")
+    def start_camera():
+        """
+        Spawns the LiveCamera.py script as a separate process.
+        """
+        try:
+            # Get the path to the LiveCamera.py file
+            script_path = os.path.join(os.path.dirname(__file__), "LiveCamera.py")
+
+            # Launch the script using the current python interpreter
+            # --source 0 uses the default webcam as defined in LiveCamera.py
+            subprocess.Popen([sys.executable, script_path, "--source", "0"])
+
+            return "<h3>Camera Starting...</h3><p>Check your taskbar for the 'RoadWatch AI Live Feed' window.</p>"
+        except Exception as e:
+            return f"Error starting camera: {str(e)}", 500
+
 
     @app.get("/")
     def index() -> Any:

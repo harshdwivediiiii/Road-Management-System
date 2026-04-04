@@ -87,9 +87,11 @@ COLORS = {
 
 # ── Mount entrypoint ─────────────────────────────────────────────────
 
+
 def mount_dashboard(server):
     """Mount the Plotly Dash dashboard on the shared Flask server."""
     if dash is None:
+
         @server.get("/dashboard/")
         def dashboard_unavailable() -> Response:
             return Response(
@@ -97,6 +99,7 @@ def mount_dashboard(server):
                 "<p>Dash is not installed in this environment.</p>",
                 mimetype="text/html",
             )
+
         print("[DASH][WARN] Dash not installed. Fallback route registered.")
         return None
 
@@ -113,6 +116,7 @@ def mount_dashboard(server):
 
 
 # ── Reusable style helpers ───────────────────────────────────────────
+
 
 def _panel_style() -> dict:
     return {
@@ -164,13 +168,13 @@ def _chart_layout(title: str) -> dict:
 
 # ── Layout ───────────────────────────────────────────────────────────
 
+
 def _build_layout():
     return html.Div(
         [
             # Auto-refresh every 3 s
             dcc.Interval(id="refresh", interval=3000, n_intervals=0),
             dcc.Store(id="status-filter", data="All"),
-
             # ── Header ───────────────────────────────────────────
             html.Div(
                 [
@@ -192,16 +196,26 @@ def _build_layout():
                                 id="live-clock",
                                 style={"fontSize": "20px", "textAlign": "right"},
                             ),
-                            html.Div(
-                                "LIVE",
+                            # New Clickable Button connected to backend route
+                            html.A(
+                                html.Button(
+                                    "LIVE",
+                                    style={
+                                        "padding": "6px 20px",
+                                        "backgroundColor": COLORS["green"],
+                                        "color": "#03130a",
+                                        "borderRadius": "999px",
+                                        "fontWeight": "700",
+                                        "border": "none",
+                                        "cursor": "pointer",
+                                    },
+                                ),
+                                href="/camera/start",
+                                target="_blank",  # Opens camera in a new window/process
                                 style={
                                     "marginTop": "8px",
                                     "display": "inline-block",
-                                    "padding": "6px 12px",
-                                    "backgroundColor": COLORS["green"],
-                                    "color": "#03130a",
-                                    "borderRadius": "999px",
-                                    "fontWeight": "700",
+                                    "textDecoration": "none",
                                 },
                             ),
                         ]
@@ -214,7 +228,6 @@ def _build_layout():
                     "marginBottom": "20px",
                 },
             ),
-
             # ── Stat cards (/api/stats) ──────────────────────────
             html.Div(
                 [
@@ -232,7 +245,6 @@ def _build_layout():
                     "marginBottom": "20px",
                 },
             ),
-
             # ── Charts row 1 (/api/stats) ────────────────────────
             html.Div(
                 [
@@ -247,7 +259,6 @@ def _build_layout():
                     "marginBottom": "20px",
                 },
             ),
-
             # ── Charts row 2 (/api/stats) ────────────────────────
             html.Div(
                 [
@@ -261,13 +272,11 @@ def _build_layout():
                     "marginBottom": "20px",
                 },
             ),
-
             # ── Zone progress (/api/potholes) ────────────────────
             html.Div(
                 id="zone-progress",
                 style={**_panel_style(), "marginBottom": "20px"},
             ),
-
             # ── Hotspot zones (/api/hotspots) ────────────────────
             html.Div(
                 [
@@ -285,18 +294,41 @@ def _build_layout():
                 ],
                 style={**_panel_style(), "marginBottom": "20px"},
             ),
-
             # ── Live table with filters (/api/potholes) ─────────
             html.Div(
                 [
                     html.Div(
                         [
-                            html.Button("All", id="filter-all", n_clicks=0, style=_btn_style(COLORS["blue"])),
-                            html.Button("Pending", id="filter-pending", n_clicks=0, style=_btn_style(COLORS["red"])),
-                            html.Button("In Progress", id="filter-progress", n_clicks=0, style=_btn_style(COLORS["yellow"])),
-                            html.Button("Fixed", id="filter-fixed", n_clicks=0, style=_btn_style(COLORS["green"])),
+                            html.Button(
+                                "All",
+                                id="filter-all",
+                                n_clicks=0,
+                                style=_btn_style(COLORS["blue"]),
+                            ),
+                            html.Button(
+                                "Pending",
+                                id="filter-pending",
+                                n_clicks=0,
+                                style=_btn_style(COLORS["red"]),
+                            ),
+                            html.Button(
+                                "In Progress",
+                                id="filter-progress",
+                                n_clicks=0,
+                                style=_btn_style(COLORS["yellow"]),
+                            ),
+                            html.Button(
+                                "Fixed",
+                                id="filter-fixed",
+                                n_clicks=0,
+                                style=_btn_style(COLORS["green"]),
+                            ),
                         ],
-                        style={"display": "flex", "gap": "10px", "marginBottom": "12px"},
+                        style={
+                            "display": "flex",
+                            "gap": "10px",
+                            "marginBottom": "12px",
+                        },
                     ),
                     dash_table.DataTable(
                         id="live-table",
@@ -306,7 +338,11 @@ def _build_layout():
                             {"name": "Address", "id": "address"},
                             {"name": "Severity", "id": "severity"},
                             {"name": "Status", "id": "status"},
-                            {"name": "Maps Link", "id": "maps_link", "presentation": "markdown"},
+                            {
+                                "name": "Maps Link",
+                                "id": "maps_link",
+                                "presentation": "markdown",
+                            },
                             {"name": "Time", "id": "timestamp"},
                         ],
                         style_as_list_view=True,
@@ -326,9 +362,18 @@ def _build_layout():
                             "height": "auto",
                         },
                         style_data_conditional=[
-                            {"if": {"filter_query": '{status} = "Pending"'}, "color": COLORS["red"]},
-                            {"if": {"filter_query": '{status} = "Fixed"'}, "color": COLORS["green"]},
-                            {"if": {"filter_query": '{status} = "In Progress"'}, "color": COLORS["yellow"]},
+                            {
+                                "if": {"filter_query": '{status} = "Pending"'},
+                                "color": COLORS["red"],
+                            },
+                            {
+                                "if": {"filter_query": '{status} = "Fixed"'},
+                                "color": COLORS["green"],
+                            },
+                            {
+                                "if": {"filter_query": '{status} = "In Progress"'},
+                                "color": COLORS["yellow"],
+                            },
                         ],
                         page_size=20,
                     ),
@@ -347,6 +392,7 @@ def _build_layout():
 
 
 # ── Callbacks ────────────────────────────────────────────────────────
+
 
 def _register_callbacks(app) -> None:
 
@@ -451,7 +497,8 @@ def _register_callbacks(app) -> None:
             name = z["zone"]
             total = z["count"]
             fixed_n = sum(
-                1 for r in records
+                1
+                for r in records
                 if r.get("zone") == name and r.get("status") == "Fixed"
             )
             pct = round((fixed_n / total) * 100, 2) if total else 0.0
