@@ -1,90 +1,119 @@
 # RoadWatch AI - Automated Road Infrastructure Monitoring
 
-An AI-powered road monitoring system that uses YOLO, OpenCV, Flask, Plotly Dash, Google Maps, and MongoDB to detect road hazards from dashcam footage and generate real-time reports for maintenance teams.
+![RoadWatch AI Banner](file:///C:/Users/alokp/.gemini/antigravity/brain/59f8052c-a37d-46d4-8ffb-bc476f861048/roadwatch_ai_banner_1775280563490.png)
 
-## Problem Statement
+## 🌟 Overview
 
-Manual inspection of potholes, cracks, broken streetlights, and related road hazards is slow, costly, and inconsistent. Delays between hazard appearance and repair increase accident risk, damage vehicles, and make it harder for city authorities to prioritize critical zones.
+**RoadWatch AI** is a state-of-the-art vision-based monitoring system designed to revolutionize urban infrastructure maintenance. Leveraging the power of deep learning and real-time geospatial data enrichment, RoadWatch AI transforms standard video feeds into actionable maintenance intelligence.
 
-## Proposed Solution
+### 🚀 Key Features
 
-This project turns a dashcam or roadside video stream into an automated monitoring workflow:
+*   **⚡ Real-Time Detection**: High-accuracy pothole and hazard detection using YOLOv8.
+*   **📍 Precise Geotagging**: Automatic GPS coordinate attachment and reverse geocoding via Google Maps Geocoding API.
+*   **📊 Insightful Dashboard**: Interactive visualization of hazard hotspots, trends, and repair metrics built with Plotly Dash.
+*   **🛠️ Efficient Reporting**: Automated submission of hazard reports for city maintenance teams.
 
-1. **Detection**: YOLO detects hazards such as potholes.
-2. **Geocoding**: The system attaches GPS coordinates and reverse geocodes the location (via Google Maps) to each detection.
-3. **Storage**: A Flask API stores hazard reports in MongoDB (with a local fallback if DB is offline).
-4. **Dashboard**: A live, interactive dashboard built with Plotly Dash displays hotspot summaries, fix rates, and tracks statuses to help authorities prioritize repair zones.
+---
 
-## Technical Stack
+## 🛠️ Tech Stack & Tools
 
-- **Computer Vision**: YOLOv8 (via Ultralytics)
-- **Image Processing**: OpenCV
-- **Backend API**: Flask
-- **Live Dashboard**: Plotly Dash
-- **Geospatial Enrichment**: Google Maps Geocoding API
-- **Storage**: MongoDB via `pymongo` with an in-memory local fallback
+![Python](https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54)
+![YOLOv8](https://img.shields.io/badge/YOLOv8-blue?style=for-the-badge&logo=ultralytics&logoColor=white)
+![OpenCV](https://img.shields.io/badge/opencv-%23white.svg?style=for-the-badge&logo=opencv&logoColor=white)
+![Flask](https://img.shields.io/badge/flask-%23000.svg?style=for-the-badge&logo=flask&logoColor=white)
+![Plotly Dash](https://img.shields.io/badge/Plotly%20Dash-0080FF?style=for-the-badge&logo=Plotly&logoColor=white)
+![MongoDB](https://img.shields.io/badge/MongoDB-%234ea94b.svg?style=for-the-badge&logo=mongodb&logoColor=white)
+![Google Maps](https://img.shields.io/badge/Google%20Maps-4285F4?style=for-the-badge&logo=google-maps&logoColor=white)
 
-## Project Structure
+---
+
+## 🏗️ Architecture
+
+1.  **Detection**: YOLOv8 scans video/dashcam feeds for infrastructure hazards.
+2.  **Enrichment**: Detections are paired with spatial data via `google_maps.py`.
+3.  **Storage**: Reports are securely pushed to MongoDB, with local fallback systems in `storage.py`.
+4.  **Action**: Authorities use the `dashboard.py` interface to prioritize repairs based on density and severity.
+
+### 📁 Project Structure
 
 ```text
 Road-Management-System/
-|-- app.py                # Main Flask application and server entrypoint
-|-- dashboard.py          # Plotly Dash interactive frontend mounted on Flask
-|-- config.py             # Environment configuration mapping
-|-- storage.py            # MongoDB/in-memory data operations
-|-- yolo_detect.py        # YOLO model wrapper and detection logic
-|-- LiveCamera.py         # Subprocess script to capture live OpenCV camera feeds
-|-- reporter.py / geotagger.py  # Report assembly and geographic helpers
-|-- requirements.txt      # Python dependencies
-|-- .env                  # Configuration keys (must be created)
-|-- static/               # Auto-generated detected hazard images
+├── app.py                # Main Flask application (Server entrypoint)
+├── dashboard.py          # Plotly Dash interactive frontend
+├── config.py             # Global environment & project configuration
+├── storage.py            # MongoDB and local storage operations
+├── yolo_detect.py        # Core YOLOv8 inference wrapper
+├── LiveCamera.py         # Subprocess for real-time camera handling
+├── reporter.py           # Automated report formatting
+├── geotagger.py          # Geographic enrichment helper
+├── requirements.txt      # Python dependencies
+├── .env                  # Configuration keys (API Keys, DB URIs)
+└── static/               # Repository for auto-generated hazard images
 ```
 
-## Setup
+---
 
-1. **Install dependencies**:
+## ⚙️ Setup & Installation
+
+### 1️⃣ Clone and Prepare
 ```bash
+# Clone the repository
+git clone https://github.com/yourusername/Road-Management-System.git
+cd Road-Management-System
+
+# Install dependencies
 pip install -r requirements.txt
 ```
 
-2. **Configure your environment**:
-Create a `.env` file in the root directory and add the following keys (customize as necessary):
+### 2️⃣ Configure Environment
+Create a `.env` file in the root directory:
 ```env
+# Database Configuration
 MONGO_URI=mongodb://localhost:27017
 MONGO_DB=road_monitoring
 MONGO_COLLECTION=potholes
+
+# API Keys
 GOOGLE_MAPS_API_KEY=your_google_maps_api_key_here
-FLASK_SECRET_KEY=change_me
+
+# Application Settings
+FLASK_SECRET_KEY=generate_a_secure_key
 FLASK_PORT=8050
-HIGH_MODEL_PATH=models/HighAccurate Model.pt
-LOW_MODEL_PATH=models/LessAccurate Model.pt
-CONFIDENCE_THRESHOLD=0.5
+
+# Model Sensitivity
 DETECTION_INTERVAL=10
+CONFIDENCE_THRESHOLD=0.5
 ```
 
-## Usage
+---
 
-1. **Start the Application**:
-Run the Flask server, which will initialize the API endpoints and mount the Dash dashboard:
-```bash
-python app.py
-```
-After starting, the console will print out the startup status including the loaded YOLO model and database connection state.
+## 🚦 Usage
 
-2. **View Dashboard**:
-Open a browser and navigate to:
-`http://localhost:8050/dashboard/`
+1.  **Launch the System**:
+    ```bash
+    python app.py
+    ```
+2.  **Access the Analytics Dashboard**:
+    Open [http://localhost:8050/dashboard/](http://localhost:8050/dashboard/)
+3.  **Initiate Monitoring Loop**:
+    Directly start the feed via: [http://localhost:8050/camera/start?source=0](http://localhost:8050/camera/start?source=0)
 
-3. **Start Camera Feed**:
-To begin live monitoring, either click the "LIVE" button from the dashboard or navigate directly to:
-`http://localhost:8050/camera/start?source=0`
-(Change `source` to a file path like `Test/Pothole Exp1.mp4` for video file testing)
+---
 
-## API Endpoints
+## 📡 API Reference
 
-- `GET /health` : Service health check (DB routing, model status).
-- `POST /api/report` : Submit a new hazard report (handles lat, lng, image_path, severity, confidence).
-- `GET /api/potholes` : Fetch recent reports (accepts `limit` query param).
-- `GET /api/stats` : Returns detailed stats: total, pending, in progress, fixed, fix rate, and hourly metrics.
-- `GET /api/hotspots` : Lists concentrated areas (hotspots) with hazard recurrences.
-- `POST /api/fix/<pothole_id>` : Mark a specific hazard id as fixed.
+| Endpoint | Method | Purpose |
+| :--- | :--- | :--- |
+| `/health` | `GET` | System health and model connectivity check |
+| `/api/report` | `POST` | High-level hazard reporting endpoint |
+| `/api/potholes` | `GET` | Retrieve chronological detection records |
+| `/api/stats` | `GET` | Dashboard data aggregation |
+| `/api/hotspots` | `GET` | Clustered hazard density mapping |
+
+---
+
+## 📜 License
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+---
+*Created by [Your Name](https://github.com/yourusername)*
