@@ -88,3 +88,11 @@ To begin live monitoring, either click the "LIVE" button from the dashboard or n
 - `GET /api/stats` : Returns detailed stats: total, pending, in progress, fixed, fix rate, and hourly metrics.
 - `GET /api/hotspots` : Lists concentrated areas (hotspots) with hazard recurrences.
 - `POST /api/fix/<pothole_id>` : Mark a specific hazard id as fixed.
+
+## 📸 Sample Output
+
+![Project High Level Architecture](IMAGES/Untitled.png)
+
+## 🔁 Workflow Diagram
+
+![Workflow](IMAGES/workflow.jpeg)
