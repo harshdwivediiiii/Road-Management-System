@@ -15,6 +15,10 @@
 
 ---
 
+## How it works ?
+
+![How it works](./public//images/how_it_works.jpeg)
+
 ## 🛠️ Tech Stack & Tools
 
 ![Python](https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54)
@@ -27,12 +31,59 @@
 
 ---
 
-## 🏗️ Architecture
+## 🏗️ High-Level Architecture (HLA)
 
-1.  **Detection**: YOLOv8 scans video/dashcam feeds for infrastructure hazards.
-2.  **Enrichment**: Detections are paired with spatial data via `google_maps.py`.
-3.  **Storage**: Reports are securely pushed to MongoDB, with local fallback systems in `storage.py`.
-4.  **Action**: Authorities use the `dashboard.py` interface to prioritize repairs based on density and severity.
+The system consists of a Flask-based backend, a Plotly Dash visual dashboard, a YOLO-powered detection engine, and a MongoDB database for persistence.
+
+```mermaid
+graph TD
+    subgraph Client ["Frontend Layers (Web Browser)"]
+        DASH["Interactive Dashboard<br/>(Plotly Dash)"]
+        LIVE["Live Camera Interface<br/>(WebRTC + JavaScript)"]
+    end
+
+    subgraph Server ["Backend Application (Flask)"]
+        API["Flask API Layer<br/>(REST Endpoints)"]
+        DET["Detection Engine<br/>(YOLOv11 / OpenCV)"]
+        STOR["Storage Interface<br/>(MongoDB Wrapper)"]
+        UTILS["Utility Modules<br/>(Geotagger, Google Maps)"]
+    end
+
+    subgraph Data ["Data & Persistence"]
+        DB[(MongoDB)]
+        FS["File System<br/>(Annotated JPEG Records)"]
+    end
+
+    subgraph Cloud ["External Integration"]
+        GMAPS["Google Maps API"]
+    end
+
+    %% Live Detection Flow
+    LIVE -- "1. Captures Frame (Base64)" --> API
+    API -- "2. Decodes & Processes" --> DET
+    DET -- "3. Returns Bounding Boxes" --> API
+    API -- "4. Returns Detection JSON" --> LIVE
+    LIVE -- "5. Overlays BBox on Camera" --> LIVE
+
+    %% Reporting Flow
+    DET -- "6. Saves Annotated Frame" --> FS
+    API -- "7. Generates Report Record" --> UTILS
+    UTILS -- "8. Performs Geotagging" --> STOR
+    STOR -- "9. Persists Data" --> DB
+
+    %% Dashboard Data Flow
+    DASH -- "10. Queries Statistics" --> API
+    API -- "11. Aggregates Records" --> STOR
+    STOR -- "12. Reads Pothole Data" --> DB
+    DASH -- "13. Displays Map Markers" --> GMAPS
+```
+
+### 🔁 Key Data Flow
+1.  **Monitoring**: Real-time camera feed processed via JavaScript and WebRTC.
+2.  **Detection**: YOLOv11 scans frames for pothole hazards and calculates severity.
+3.  **Persistence**: Records and annotated images are stored in MongoDB and the local file system.
+4.  **Analytics**: Authorities use the Plotly Dash interface for hotspot mapping and trend analysis.
+
 
 ### 📁 Project Structure
 
