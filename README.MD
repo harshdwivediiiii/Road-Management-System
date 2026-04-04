@@ -91,6 +91,7 @@ To begin live monitoring, either click the "LIVE" button from the dashboard or n
 
 ## 📸 Sample Output
 
+
 ![Project High Level Architecture](IMAGES/Untitled.png)
 
 ## 🔁 Workflow Diagram
