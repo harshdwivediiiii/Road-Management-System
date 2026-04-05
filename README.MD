@@ -5,7 +5,7 @@
 
  ## 🎥 Project Demo
 
-[▶ Watch Demo](./public/video/ProjectDemo.mp4)
+[▶ Watch Demo](https://drive.google.com/file/d/18QW1Scs-atnRSVoviVGG7tV7wjWzNNii/view?usp=sharing)
 
 
 **RoadWatch AI** is a cutting-edge **Computer Vision-as-a-Service (CVaaS)** platform engineered to modernize municipal infrastructure management. By synthesizing deep learning inferences with real-time geospatial telemetry, RoadWatch AI converts raw visual data into a **High-Fidelity Digital Twin** of road health, enabling predictive maintenance and rapid response workflows.
