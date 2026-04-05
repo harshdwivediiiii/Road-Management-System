@@ -162,6 +162,18 @@ CAMERA_PAGE_TEMPLATE = r"""
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: {{ c.bg }}; }
         ::-webkit-scrollbar-thumb { background: #9CA3AF; border-radius: 3px; }
+
+        /* Mobile Responsiveness */
+        @media (max-width: 600px) {
+            .header { flex-direction: column; gap: 10px; align-items: flex-start; padding: 12px 16px; }
+            .main-stage { padding: 12px 16px; }
+            .controls { flex-wrap: wrap; width: 100%; }
+            .controls label { flex: 1 1 100%; margin-bottom: 4px; }
+            #camera-select { flex: 1 1 auto; }
+            .btn-end { flex: 1 1 100%; text-align: center; margin-top: 8px; }
+            .footer { flex-direction: column; gap: 8px; text-align: center; }
+            video { max-height: 50vh; }
+        }
     </style>
 </head>
 <body>

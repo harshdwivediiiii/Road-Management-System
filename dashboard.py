@@ -244,6 +244,18 @@ def mount_dashboard(server):
 
                 .btn-filter-green { border: 2px solid #16A34A; color: #16A34A; }
                 .btn-filter-green:hover, .btn-filter-green:active { background-color: #16A34A; color: #fff; }
+
+                /* ── RESPONSIVE DESIGN ── */
+                @media (max-width: 768px) {
+                    .nav-header { flex-direction: column; align-items: flex-start !important; gap: 12px; padding: 14px 16px !important; }
+                    .header-right { align-items: flex-start !important; margin-top: 10px; width: 100%; }
+                    .live-clock-div { text-align: left !important; }
+                    .content-wrapper { padding: 16px !important; }
+                    .stat-cards-grid, .charts-grid, .charts-grid-2 { display: flex !important; flex-direction: column !important; }
+                    .filter-row { flex-wrap: wrap; }
+                    .btn-filter { flex: 1 1 45%; text-align: center; font-size: 11px; }
+                    .footer-txt { flex-direction: column; gap: 8px; text-align: center; }
+                }
             </style>
         </head>
         <body>
@@ -465,6 +477,7 @@ def _build_layout():
                         [
                             html.Div(
                                 id="live-clock",
+                                className="live-clock-div",
                                 style={
                                     "fontSize": "15px", "fontWeight": "600",
                                     "fontFamily": FONT_MONO,
@@ -485,10 +498,12 @@ def _build_layout():
                                        "textDecoration": "none"},
                             ),
                         ],
+                        className="header-right",
                         style={"display": "flex", "flexDirection": "column",
                                "alignItems": "flex-end"},
                     ),
                 ],
+                className="nav-header",
                 style={
                     "display": "flex", "justifyContent": "space-between",
                     "alignItems": "center",
@@ -515,9 +530,10 @@ def _build_layout():
                             _card("High Severity", "card-high", COLORS["saffron"], "▲"),
                             _card("Fix Rate %", "card-rate", COLORS["green"], "◎"),
                         ],
+                        className="stat-cards-grid",
                         style={
                             "display": "grid",
-                            "gridTemplateColumns": "repeat(6, 1fr)",
+                            "gridTemplateColumns": "repeat(auto-fit, minmax(150px, 1fr))",
                             "gap": "16px", "marginBottom": "28px",
                         },
                     ),
@@ -542,9 +558,10 @@ def _build_layout():
                                 style=_panel_style(), className="chart-panel",
                             ),
                         ],
+                        className="charts-grid",
                         style={
                             "display": "grid",
-                            "gridTemplateColumns": "1.5fr 1fr 1fr",
+                            "gridTemplateColumns": "repeat(auto-fit, minmax(300px, 1fr))",
                             "gap": "16px", "marginBottom": "28px",
                         },
                     ),
@@ -563,9 +580,10 @@ def _build_layout():
                                 style=_panel_style(), className="chart-panel",
                             ),
                         ],
+                        className="charts-grid-2",
                         style={
                             "display": "grid",
-                            "gridTemplateColumns": "1.5fr 1fr",
+                            "gridTemplateColumns": "repeat(auto-fit, minmax(300px, 1fr))",
                             "gap": "16px", "marginBottom": "28px",
                         },
                     ),
@@ -599,10 +617,12 @@ def _build_layout():
                                     html.Button("Fixed", id="filter-fixed", n_clicks=0,
                                                 className="btn-filter btn-filter-green"),
                                 ],
+                                className="filter-row",
                                 style={"display": "flex", "gap": "10px", "marginBottom": "14px"},
                             ),
                             dash_table.DataTable(
                                 id="live-table",
+                                style_table={'overflowX': 'auto'},
                                 columns=[
                                     {"name": "Type", "id": "hazard_type"},
                                     {"name": "Zone", "id": "zone"},
@@ -678,12 +698,14 @@ def _build_layout():
                                         style={"fontSize": "11px", "color": COLORS["text_muted"]},
                                     ),
                                 ],
+                                className="footer-txt",
                                 style={"display": "flex", "justifyContent": "space-between"},
                             ),
                         ],
                         style={"marginTop": "40px", "paddingBottom": "24px"},
                     ),
                 ],
+                className="content-wrapper",
                 style={
                     "padding": "28px 32px",
                     "maxWidth": "1440px",
