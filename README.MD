@@ -13,6 +13,7 @@
 
 ---
 
+
 ![How it works](./public/images/how_it_works.png)
 
 ## 🛠️ Tech Stack & Tools
