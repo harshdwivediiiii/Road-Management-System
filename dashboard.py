@@ -4,7 +4,6 @@ from collections import Counter
 from datetime import datetime
 
 from flask import Response
-import os
 
 from storage import (
     get_all_potholes,
@@ -137,9 +136,190 @@ def mount_dashboard(server):
     app.title = "RoadWatch AI — National Road Infrastructure Monitoring Portal"
 
     # Inject Google Fonts + custom CSS via index_string
-    template_path = os.path.join(os.path.dirname(__file__), "templates", "dashboard.html")
-    with open(template_path, "r", encoding="utf-8") as f:
-        app.index_string = f.read()
+    app.index_string = """
+    <!DOCTYPE html>
+    <html lang="en">
+        <head>
+            {%metas%}
+            <title>{%title%}</title>
+            <link rel="preconnect" href="https://fonts.googleapis.com">
+            <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+            <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700;800&family=Roboto+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+            {%favicon%}
+            {%css%}
+            <style>
+                *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+                html { scroll-behavior: smooth; }
+                body {
+                    font-family: 'Noto Sans', 'Segoe UI', 'Roboto', Arial, sans-serif;
+                    background: #F4F6F9;
+                    color: #374151;
+                    -webkit-font-smoothing: antialiased;
+                }
+                ::-webkit-scrollbar { width: 7px; }
+                ::-webkit-scrollbar-track { background: #E5E7EB; }
+                ::-webkit-scrollbar-thumb { background: #9CA3AF; border-radius: 4px; }
+                ::-webkit-scrollbar-thumb:hover { background: #6B7280; }
+
+                /* ── Tri-colour banner ── */
+                .goi-tricolour {
+                    position: fixed; top: 0; left: 0; right: 0; height: 5px; z-index: 9999;
+                    background: linear-gradient(90deg,
+                        #FF9933 0%, #FF9933 33.33%,
+                        #FFFFFF 33.33%, #FFFFFF 66.66%,
+                        #138808 66.66%, #138808 100%);
+                }
+
+                /* ── STAT CARD — hover lift ── */
+                .stat-card {
+                    transition: transform 0.25s ease, box-shadow 0.25s ease;
+                }
+                .stat-card:hover {
+                    transform: translateY(-4px);
+                    box-shadow: 0 8px 24px rgba(0,0,0,0.10), 0 2px 6px rgba(0,0,0,0.06) !important;
+                }
+
+                /* ── CHART PANEL — fade-in on load ── */
+                @keyframes fadeSlideUp {
+                    from { opacity: 0; transform: translateY(18px); }
+                    to   { opacity: 1; transform: translateY(0); }
+                }
+                .chart-panel {
+                    animation: fadeSlideUp 0.5s ease-out both;
+                }
+                .chart-panel:nth-child(1) { animation-delay: 0.05s; }
+                .chart-panel:nth-child(2) { animation-delay: 0.15s; }
+                .chart-panel:nth-child(3) { animation-delay: 0.25s; }
+
+                /* ── PROGRESS BAR — animated grow ── */
+                @keyframes growWidth {
+                    from { width: 0 !important; }
+                }
+                .progress-fill {
+                    animation: growWidth 0.8s ease-out both;
+                }
+
+                /* ── TABLE ROW — hover & active effects ── */
+                .dash-spreadsheet-container .dash-spreadsheet-inner td,
+                .dash-spreadsheet-container .dash-spreadsheet-inner th {
+                    font-family: 'Roboto Mono', 'Consolas', monospace !important;
+                    font-size: 12px !important;
+                    transition: background-color 0.15s ease, transform 0.1s ease;
+                }
+                .dash-spreadsheet-container .dash-spreadsheet-inner tr:hover td {
+                    background-color: #EEF2FF !important;
+                    cursor: pointer;
+                }
+                .dash-spreadsheet-container .dash-spreadsheet-inner tr:active td {
+                    background-color: #E0E7FF !important;
+                    transform: scale(0.995);
+                }
+                .dash-spreadsheet-container .dash-spreadsheet-inner tr {
+                    transition: all 0.15s ease;
+                }
+                .dash-spreadsheet-container .dash-spreadsheet-inner tr:hover {
+                    box-shadow: inset 3px 0 0 #FF9933;
+                }
+
+                /* ── FILTER BUTTONS ── */
+                .btn-filter {
+                    background-color: transparent;
+                    border-radius: 6px;
+                    padding: 7px 16px;
+                    font-weight: 600;
+                    font-size: 12px;
+                    cursor: pointer;
+                    letter-spacing: 0.5px;
+                    transition: all 0.2s ease;
+                    font-family: inherit;
+                }
+                .btn-filter-blue { border: 2px solid #2563EB; color: #2563EB; }
+                .btn-filter-blue:hover, .btn-filter-blue:active { background-color: #2563EB; color: #fff; }
+                
+                .btn-filter-red { border: 2px solid #DC2626; color: #DC2626; }
+                .btn-filter-red:hover, .btn-filter-red:active { background-color: #DC2626; color: #fff; }
+
+                .btn-filter-amber { border: 2px solid #D97706; color: #D97706; }
+                .btn-filter-amber:hover, .btn-filter-amber:active { background-color: #D97706; color: #fff; }
+
+                .btn-filter-green { border: 2px solid #16A34A; color: #16A34A; }
+                .btn-filter-green:hover, .btn-filter-green:active { background-color: #16A34A; color: #fff; }
+
+                /* ── RESPONSIVE DESIGN ── */
+                @media (max-width: 768px) {
+                    .nav-header { flex-direction: column; align-items: flex-start !important; gap: 12px; padding: 14px 16px !important; }
+                    .header-right { align-items: flex-start !important; margin-top: 10px; width: 100%; }
+                    .live-clock-div { text-align: left !important; }
+                    .content-wrapper { padding: 16px !important; }
+                    .stat-cards-grid, .charts-grid, .charts-grid-2 { display: flex !important; flex-direction: column !important; }
+                    .filter-row { flex-wrap: wrap; }
+                    .btn-filter { flex: 1 1 45%; text-align: center; font-size: 11px; }
+                    .footer-txt { flex-direction: column; gap: 8px; text-align: center; }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="goi-tricolour"></div>
+            {%app_entry%}
+            <footer>
+                {%config%}
+                {%scripts%}
+                {%renderer%}
+            </footer>
+            <script>
+            /* ── Counter animation for stat cards (once on load) ── */
+            (function() {
+                var animated = {};
+
+                function animateCounter(el) {
+                    if (animated[el.id]) return;
+                    var raw = el.textContent.trim();
+                    var isPercent = raw.endsWith('%');
+                    var numStr = raw.replace(/[^0-9.]/g, '');
+                    var target = parseFloat(numStr);
+                    if (isNaN(target) || target === 0) return;
+                    
+                    animated[el.id] = true;
+                    var duration = 1200;
+                    var startTime = performance.now();
+                    var isInt = target === Math.floor(target) && !isPercent;
+                    
+                    function fmt(n) {
+                        var s = isInt ? Math.round(n).toLocaleString() : n.toFixed(2);
+                        return isPercent ? s + '%' : s;
+                    }
+                    
+                    function step(now) {
+                        var t = Math.min((now - startTime) / duration, 1);
+                        var ease = 1 - Math.pow(1 - t, 3);
+                        el.textContent = fmt(target * ease);
+                        if (t < 1) {
+                            requestAnimationFrame(step);
+                        } else {
+                            el.textContent = raw; // Restore Dash's original exact string
+                        }
+                    }
+                    requestAnimationFrame(step);
+                }
+
+                var cardIds = ['card-total','card-pending','card-progress','card-fixed','card-high','card-rate'];
+                var obs = new MutationObserver(function(mutations) {
+                    mutations.forEach(function(m) {
+                        var el = m.target.nodeType === 1 ? m.target : m.target.parentElement;
+                        if (el && cardIds.indexOf(el.id) !== -1) {
+                            animateCounter(el);
+                        }
+                    });
+                });
+
+                window.addEventListener('DOMContentLoaded', function() {
+                    obs.observe(document.body, {childList: true, characterData: true, subtree: true});
+                });
+            })();
+            </script>
+        </body>
+    </html>
+    """
 
     app.layout = _build_layout()
     _register_callbacks(app)
@@ -297,6 +477,7 @@ def _build_layout():
                         [
                             html.Div(
                                 id="live-clock",
+                                className="live-clock-div",
                                 style={
                                     "fontSize": "15px", "fontWeight": "600",
                                     "fontFamily": FONT_MONO,
@@ -317,10 +498,12 @@ def _build_layout():
                                        "textDecoration": "none"},
                             ),
                         ],
+                        className="header-right",
                         style={"display": "flex", "flexDirection": "column",
                                "alignItems": "flex-end"},
                     ),
                 ],
+                className="nav-header",
                 style={
                     "display": "flex", "justifyContent": "space-between",
                     "alignItems": "center",
@@ -347,9 +530,10 @@ def _build_layout():
                             _card("High Severity", "card-high", COLORS["saffron"], "▲"),
                             _card("Fix Rate %", "card-rate", COLORS["green"], "◎"),
                         ],
+                        className="stat-cards-grid",
                         style={
                             "display": "grid",
-                            "gridTemplateColumns": "repeat(6, 1fr)",
+                            "gridTemplateColumns": "repeat(auto-fit, minmax(150px, 1fr))",
                             "gap": "16px", "marginBottom": "28px",
                         },
                     ),
@@ -374,9 +558,10 @@ def _build_layout():
                                 style=_panel_style(), className="chart-panel",
                             ),
                         ],
+                        className="charts-grid",
                         style={
                             "display": "grid",
-                            "gridTemplateColumns": "1.5fr 1fr 1fr",
+                            "gridTemplateColumns": "repeat(auto-fit, minmax(300px, 1fr))",
                             "gap": "16px", "marginBottom": "28px",
                         },
                     ),
@@ -395,9 +580,10 @@ def _build_layout():
                                 style=_panel_style(), className="chart-panel",
                             ),
                         ],
+                        className="charts-grid-2",
                         style={
                             "display": "grid",
-                            "gridTemplateColumns": "1.5fr 1fr",
+                            "gridTemplateColumns": "repeat(auto-fit, minmax(300px, 1fr))",
                             "gap": "16px", "marginBottom": "28px",
                         },
                     ),
@@ -431,10 +617,12 @@ def _build_layout():
                                     html.Button("Fixed", id="filter-fixed", n_clicks=0,
                                                 className="btn-filter btn-filter-green"),
                                 ],
+                                className="filter-row",
                                 style={"display": "flex", "gap": "10px", "marginBottom": "14px"},
                             ),
                             dash_table.DataTable(
                                 id="live-table",
+                                style_table={'overflowX': 'auto'},
                                 columns=[
                                     {"name": "Type", "id": "hazard_type"},
                                     {"name": "Zone", "id": "zone"},
@@ -510,12 +698,14 @@ def _build_layout():
                                         style={"fontSize": "11px", "color": COLORS["text_muted"]},
                                     ),
                                 ],
+                                className="footer-txt",
                                 style={"display": "flex", "justifyContent": "space-between"},
                             ),
                         ],
                         style={"marginTop": "40px", "paddingBottom": "24px"},
                     ),
                 ],
+                className="content-wrapper",
                 style={
                     "padding": "28px 32px",
                     "maxWidth": "1440px",
